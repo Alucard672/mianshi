@@ -9,6 +9,7 @@ const { computeMatchRate } = require("../match");
 const { parseKeywords, unique } = require("../utils/keywords");
 const { parseResumeToText } = require("../ocr");
 const { scoreAnswer } = require("../score");
+const { hasCloudBaseConfig, uploadLocalFileToCloudBase } = require("../storage/cloudbase");
 
 const router = express.Router();
 const uploadsDir = path.join(__dirname, "..", "..", "uploads");
@@ -113,8 +114,22 @@ router.post("/submit-resume", resumeUpload.single("resume"), async (req, res, ne
     }
 
     // OCR parse resume -> text
-    const resumePath = `/uploads/${resumeFile.filename}`;
     const resumeAbsPath = path.join(uploadsDir, resumeFile.filename);
+    let resumePath = `/uploads/${resumeFile.filename}`;
+    let resumeFileId = null;
+    let resumeUrl = null;
+
+    if (hasCloudBaseConfig()) {
+      const up = await uploadLocalFileToCloudBase({
+        localPath: resumeAbsPath,
+        cloudPathPrefix: "uploads/resumes"
+      });
+      resumeFileId = up.fileID;
+      resumeUrl = up.tempUrl || null;
+      // Store URL for immediate preview; file_id for later refresh.
+      resumePath = resumeUrl || resumePath;
+    }
+
     let resumeText = "";
     try {
       resumeText = await parseResumeToText({ filePath: resumeAbsPath });
@@ -142,8 +157,8 @@ router.post("/submit-resume", resumeUpload.single("resume"), async (req, res, ne
     const stage = passed ? "RESUME_PASSED" : "RESUME_REJECTED";
 
     const [ir] = await pool.query(
-      "INSERT INTO interviews (user_id, job_id, invite_id, resume_path, video_path, user_keywords, resume_text, match_rate, total_score, stage, second_round_invited) VALUES (?,?,?,?,?,?,?,?,?,?,0)",
-      [userId, jobId, inv.id, resumePath, null, mergedRaw, resumeText, matchRate, null, stage]
+      "INSERT INTO interviews (user_id, job_id, invite_id, resume_path, resume_file_id, video_path, video_file_id, user_keywords, resume_text, match_rate, total_score, stage, second_round_invited) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0)",
+      [userId, jobId, inv.id, resumePath, resumeFileId, null, null, mergedRaw, resumeText, matchRate, null, stage]
     );
     const interviewId = ir.insertId;
 
@@ -168,6 +183,8 @@ router.post("/submit-resume", resumeUpload.single("resume"), async (req, res, ne
     res.json({
       interviewId,
       resumePath,
+      resumeFileId,
+      resumeUrl,
       job: { id: job.id, title: job.title },
       match: {
         matchRate: Number(matchRate.toFixed(2)),
@@ -222,6 +239,18 @@ router.post(
       if (!assigned.length) return res.status(400).json({ error: "该题目不属于本次面试" });
 
       const answerVideoPath = `/uploads/${videoFile.filename}`;
+      let answerVideoFileId = null;
+      let answerVideoUrl = null;
+      const answerVideoAbsPath = path.join(uploadsDir, videoFile.filename);
+
+      if (hasCloudBaseConfig()) {
+        const up = await uploadLocalFileToCloudBase({
+          localPath: answerVideoAbsPath,
+          cloudPathPrefix: "uploads/answer-videos"
+        });
+        answerVideoFileId = up.fileID;
+        answerVideoUrl = up.tempUrl || null;
+      }
 
       // Score: if answer_text provided -> keyword/expression scoring; otherwise keep 0 for MVP.
       const [[job]] = await pool.query("SELECT target_keywords FROM jobs WHERE id=? LIMIT 1", [interview.job_id]);
@@ -230,8 +259,8 @@ router.post(
       const itemScore = scored ? scored.total : 0;
 
       await pool.query(
-        "UPDATE results SET user_answer=?, answer_video_path=?, item_score=? WHERE interview_id=? AND question_id=?",
-        [answerText || "", answerVideoPath, itemScore, interviewId, questionId]
+        "UPDATE results SET user_answer=?, answer_video_path=?, answer_video_file_id=?, item_score=? WHERE interview_id=? AND question_id=?",
+        [answerText || "", answerVideoUrl || answerVideoPath, answerVideoFileId, itemScore, interviewId, questionId]
       );
 
       const [[progress]] = await pool.query(
@@ -277,7 +306,8 @@ router.post(
       res.json({
         interviewId,
         questionId,
-        answerVideoPath,
+        answerVideoPath: answerVideoUrl || answerVideoPath,
+        answerVideoFileId,
         itemScore,
         progress: { answered, total, done },
         final

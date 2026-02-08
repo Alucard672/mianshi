@@ -93,4 +93,3 @@ main().catch((e) => {
   console.error("[db:migrate] FAILED:", e.code || "", e.message || e);
   process.exit(1);
 });
-

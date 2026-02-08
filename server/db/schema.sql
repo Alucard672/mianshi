@@ -75,8 +75,10 @@ CREATE TABLE IF NOT EXISTS interviews (
   job_id BIGINT NOT NULL,
   invite_id BIGINT DEFAULT NULL,
   resume_path TEXT,
+  resume_file_id TEXT DEFAULT NULL,
   -- initial intro video is no longer required; keep nullable for backward compat
   video_path TEXT,
+  video_file_id TEXT DEFAULT NULL,
   -- extension fields needed by PRD matching/flow
   user_keywords TEXT NOT NULL,
   resume_text MEDIUMTEXT DEFAULT NULL,
@@ -113,6 +115,7 @@ CREATE TABLE IF NOT EXISTS results (
   question_id BIGINT NOT NULL,
   user_answer MEDIUMTEXT NOT NULL,
   answer_video_path TEXT DEFAULT NULL,
+  answer_video_file_id TEXT DEFAULT NULL,
   item_score DECIMAL(6,2) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_results_interview FOREIGN KEY (interview_id) REFERENCES interviews(id),
