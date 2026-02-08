@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Subtle grid + glow for "AG IDE" vibe */
+body {
+  background-image:
+    radial-gradient(600px 300px at 15% 10%, rgba(124, 255, 178, 0.18), transparent 60%),
+    radial-gradient(500px 250px at 80% 20%, rgba(100, 210, 255, 0.14), transparent 60%),
+    linear-gradient(to bottom, #070a12, #060914);
+}
+
+.grid-overlay {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at top, rgba(0, 0, 0, 0.9), transparent 65%);
+}
+
