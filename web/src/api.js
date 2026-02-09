@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:3001";
+// If frontend + backend are deployed together, leave baseURL empty to use same-origin.
+const apiBase =
+  import.meta.env.VITE_API_BASE ||
+  (import.meta.env.DEV ? "http://localhost:3001" : "");
 
 export const http = axios.create({
   baseURL: apiBase,

@@ -55,6 +55,19 @@ app.use("/api/public", publicRoutes);
 app.use("/api/invite", inviteRoutes);
 app.use("/api/candidate", candidateRoutes);
 
+// Serve SPA (web/dist) when available. Keeps dev workflow unchanged.
+const webDistDir = path.join(__dirname, "..", "..", "web", "dist");
+if (fs.existsSync(webDistDir)) {
+  app.use(express.static(webDistDir, { fallthrough: true }));
+  app.get("*", (req, res, next) => {
+    if (req.method !== "GET") return next();
+    if (req.path.startsWith("/api/") || req.path.startsWith("/uploads/")) return next();
+    const accept = String(req.headers.accept || "");
+    if (!accept.includes("text/html")) return next();
+    return res.sendFile(path.join(webDistDir, "index.html"));
+  });
+}
+
 app.use((err, _req, res, _next) => {
   // eslint-disable-next-line no-console
   console.error(err);

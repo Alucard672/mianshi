@@ -10,6 +10,10 @@ This repo contains:
 
 如果你用 CloudBase 云托管的 “Node 项目构建” 模式：根目录需要 `package.json`，本仓库已补齐，直接执行 `npm install` + `npm start` 即可启动后端（内部会安装 `server/` 依赖）。
 
+## 合并部署（同一服务）
+
+服务器上把前端构建到 `web/dist`，后端会自动托管静态资源：见 `DEPLOY_SERVER.md`。
+
 ## 1) Database
 
 Create DB + tables:
