@@ -8,13 +8,13 @@ module.exports = {
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"]
       },
       colors: {
-        bg0: "#070A12",
-        bg1: "#0B1020",
-        neon: "#7CFFB2",
-        cyan: "#64D2FF"
+        // Warm, less-inky palette (system was too dark/cold).
+        bg0: "#140F0A", // warm near-black
+        bg1: "#1E1510", // panel background
+        neon: "#FFCE7A", // amber highlight
+        cyan: "#FF8A5B" // coral primary
       }
     }
   },
   plugins: [require("@tailwindcss/forms")]
 };
-
