@@ -114,11 +114,14 @@
             </div>
             <button
               class="rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-2 text-cyan hover:bg-cyan/15 disabled:opacity-50 font-mono"
-              :disabled="loading || !canSubmit"
+              :disabled="loading"
               @click="submit"
             >
               {{ loading ? "提交中..." : "提交报名" }}
             </button>
+          </div>
+          <div v-if="!canSubmit" class="mt-2 text-[11px] font-mono text-white/55">
+            请先选择岗位、填写姓名/手机号/邮箱，并上传简历后再提交。
           </div>
         </div>
       </div>
@@ -179,15 +182,15 @@ const canSubmit = computed(() => {
 });
 
 function onResumeChange(e) {
-  resumeFile.value = e?.target?.files?.[0] || null;
+  resumeFile.value = resumeRef.value?.files?.[0] || e?.target?.files?.[0] || null;
 }
 
 function onImageChange(e) {
-  imageFile.value = e?.target?.files?.[0] || null;
+  imageFile.value = imageRef.value?.files?.[0] || e?.target?.files?.[0] || null;
 }
 
 function onVideoChange(e) {
-  videoFile.value = e?.target?.files?.[0] || null;
+  videoFile.value = videoRef.value?.files?.[0] || e?.target?.files?.[0] || null;
 }
 
 function salaryText(j) {
@@ -214,10 +217,30 @@ async function load() {
 async function submit() {
   error.value = "";
   success.value = null;
-  if (!resumeFile.value) {
+  if (!String(form.value.jobId || "").trim()) {
+    error.value = "请选择岗位。";
+    return;
+  }
+  if (!String(form.value.name || "").trim()) {
+    error.value = "请填写姓名。";
+    return;
+  }
+  if (!String(form.value.phone || "").trim()) {
+    error.value = "请填写手机号。";
+    return;
+  }
+  if (!String(form.value.email || "").trim()) {
+    error.value = "请填写邮箱。";
+    return;
+  }
+  if (!resumeFile.value && !resumeRef.value?.files?.[0]) {
     error.value = "请上传简历。";
     return;
   }
+  // Fallback: some browsers don't trigger reactive updates for File objects reliably.
+  if (!resumeFile.value) resumeFile.value = resumeRef.value?.files?.[0] || null;
+  if (!imageFile.value) imageFile.value = imageRef.value?.files?.[0] || null;
+  if (!videoFile.value) videoFile.value = videoRef.value?.files?.[0] || null;
   loading.value = true;
   try {
     const fd = new FormData();
