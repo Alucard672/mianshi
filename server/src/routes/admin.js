@@ -572,6 +572,23 @@ router.delete("/users/:userId", async (req, res, next) => {
 });
 
 // Interviewees list (applications/interviews)
+router.get("/interviews/summary", async (req, res, next) => {
+  try {
+    const sinceId = Number(req.query.since_id || 0);
+    const pool = getPool();
+    const [[m]] = await pool.query("SELECT MAX(id) AS latestId FROM interviews");
+    const latestId = Number(m?.latestId || 0);
+    let newCount = 0;
+    if (Number.isFinite(sinceId) && sinceId > 0) {
+      const [[c]] = await pool.query("SELECT COUNT(*) AS c FROM interviews WHERE id > ?", [sinceId]);
+      newCount = Number(c?.c || 0);
+    }
+    res.json({ latestId, newCount });
+  } catch (e) {
+    next(e);
+  }
+});
+
 router.get("/interviews", async (_req, res, next) => {
   try {
     const pool = getPool();

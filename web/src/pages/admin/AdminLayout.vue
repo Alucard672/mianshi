@@ -5,6 +5,19 @@
       <div class="flex items-center justify-between gap-3">
         <BrandHeader />
         <div class="flex items-center gap-3">
+          <button
+            class="relative rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-mono text-white/70 hover:bg-white/10"
+            @click="openApplicants"
+            :title="newCount ? `新增面试人员：${newCount}` : '面试人员'"
+          >
+            面试人员
+            <span
+              v-if="newCount"
+              class="absolute -top-2 -right-2 min-w-[22px] rounded-full border border-cyan/30 bg-cyan/15 px-2 py-0.5 text-[10px] font-mono text-cyan text-center"
+            >
+              {{ newCount > 99 ? "99+" : newCount }}
+            </span>
+          </button>
           <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-mono text-white/60">
             身份: <span class="text-white/80">{{ identityLabel }}</span>
           </div>
@@ -49,11 +62,18 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import BrandHeader from "../../components/BrandHeader.vue";
+import { http } from "../../api";
 
+const route = useRoute();
 const router = useRouter();
+
+const STORAGE_KEY = "admin_last_seen_interview_id";
+const newCount = ref(0);
+const latestId = ref(0);
+let timer = null;
 
 const profile = computed(() => {
   try {
@@ -70,11 +90,72 @@ const identityLabel = computed(() => {
   return `${p.name || p.username || "-"} (${p.role || "-"})`;
 });
 
+function getLastSeenId() {
+  const v = Number(localStorage.getItem(STORAGE_KEY) || 0);
+  return Number.isFinite(v) ? v : 0;
+}
+
+function setLastSeenId(id) {
+  const n = Number(id || 0);
+  if (!Number.isFinite(n) || n <= 0) return;
+  localStorage.setItem(STORAGE_KEY, String(n));
+}
+
+async function pollSummary() {
+  try {
+    const sinceId = getLastSeenId();
+    const { data } = await http.get("/api/admin/interviews/summary", {
+      params: { since_id: sinceId || 0 }
+    });
+    latestId.value = Number(data.latestId || 0);
+
+    // First visit: don't show "new" badge for historical records.
+    if (!sinceId && latestId.value) {
+      setLastSeenId(latestId.value);
+      newCount.value = 0;
+      return;
+    }
+    newCount.value = Number(data.newCount || 0);
+  } catch {
+    // ignore polling errors; UI should remain usable even if summary fails.
+  }
+}
+
+function markAllSeen() {
+  if (latestId.value) setLastSeenId(latestId.value);
+  newCount.value = 0;
+}
+
+function openApplicants() {
+  markAllSeen();
+  router.push("/admin/applicants");
+}
+
 function logout() {
   localStorage.removeItem("employee_token");
   localStorage.removeItem("employee_profile");
   router.replace("/login");
 }
+
+onMounted(() => {
+  pollSummary();
+  timer = setInterval(pollSummary, 15_000);
+});
+
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer);
+  timer = null;
+});
+
+watch(
+  () => route.fullPath,
+  (p) => {
+    if (String(p || "").startsWith("/admin/applicants")) {
+      // When the list is open, treat items as seen.
+      markAllSeen();
+    }
+  }
+);
 </script>
 
 <style scoped>
