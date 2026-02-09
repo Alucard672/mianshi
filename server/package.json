@@ -7,7 +7,7 @@
     "db:init": "node scripts/init-db.js",
     "db:migrate": "node scripts/migrate-db.js",
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "start": "node scripts/start.js"
   },
   "dependencies": {
     "@cloudbase/node-sdk": "^3.4.0",

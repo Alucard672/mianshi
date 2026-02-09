@@ -36,7 +36,7 @@ function isIgnorableMysqlError(e) {
   );
 }
 
-async function main() {
+async function migrateDb() {
   const host = required("DB_HOST");
   const port = Number(process.env.DB_PORT || 3306);
   const user = required("DB_USER");
@@ -89,7 +89,11 @@ async function main() {
   console.log("[db:migrate] OK");
 }
 
-main().catch((e) => {
-  console.error("[db:migrate] FAILED:", e.code || "", e.message || e);
-  process.exit(1);
-});
+module.exports = { migrateDb };
+
+if (require.main === module) {
+  migrateDb().catch((e) => {
+    console.error("[db:migrate] FAILED:", e.code || "", e.message || e);
+    process.exit(1);
+  });
+}
