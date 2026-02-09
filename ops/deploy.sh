@@ -62,6 +62,11 @@ cp -a "${src_dir}/." "${release_dir}/"
 # Clean macOS AppleDouble files that can break builds.
 find "${release_dir}" -name '._*' -delete || true
 
+# Ensure the release directory sorts as the latest one by mtime.
+# `cp -a` preserves timestamps from the source folder, which can cause the prune step
+# (mtime-based) to delete the fresh release immediately.
+touch "${release_dir}"
+
 # Ensure required folders exist.
 test -f "${release_dir}/server/package.json"
 test -f "${release_dir}/web/package.json"
@@ -153,6 +158,22 @@ for i in 1 2 3 4 5 6 7 8 9 10; do
 done
 
 echo "[deploy] pruning old releases (keep ${KEEP_RELEASES})..."
-ls -1dt "${RELEASES_DIR}"/* 2>/dev/null | tail -n "+$((KEEP_RELEASES + 1))" | xargs -r rm -rf
+# Prune by release directory name (timestamp), not by mtime.
+current_target="$(readlink -f "${CURRENT_DIR}" 2>/dev/null || true)"
+releases=()
+while IFS= read -r name; do
+  [[ -d "${RELEASES_DIR}/${name}" ]] && releases+=("${name}")
+done < <(ls -1 "${RELEASES_DIR}" 2>/dev/null | sort -r)
+
+if [[ "${#releases[@]}" -gt "${KEEP_RELEASES}" ]]; then
+  for ((i=KEEP_RELEASES; i<${#releases[@]}; i++)); do
+    d="${RELEASES_DIR}/${releases[$i]}"
+    # Never delete the current target even if KEEP_RELEASES is misconfigured.
+    if [[ -n "${current_target}" ]] && [[ "$(readlink -f "${d}" 2>/dev/null || true)" == "${current_target}" ]]; then
+      continue
+    fi
+    rm -rf "${d}"
+  done
+fi
 
 echo "[deploy] done."
