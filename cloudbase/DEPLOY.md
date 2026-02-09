@@ -15,6 +15,9 @@
 - `server/Dockerfile`
 - `server/.dockerignore`
 
+如果你在云托管选择的是 “Node 项目” 而不是 “Dockerfile 构建”，需要保证仓库根目录存在 `package.json`。
+本仓库已补齐根 `package.json`，默认会在安装阶段自动安装 `server/` 依赖，并用 `npm start` 启动后端。
+
 ### 2) 环境变量（云上必配）
 
 在 CloudRun 服务环境变量里配置（同 `server/.env.example`）：
@@ -67,4 +70,3 @@ npm run build
 1. 不要把 `.env` 上传到仓库或暴露给前端。
 2. 生产环境务必修改默认管理员密码（当前默认 `admin/111111` 仅适合本地/演示）。
 3. 云托管环境不要依赖本地 `uploads/` 目录做持久化；已改为 CloudBase 存储。
-
