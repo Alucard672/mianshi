@@ -296,6 +296,79 @@ router.delete("/questions/:questionId", async (req, res, next) => {
   }
 });
 
+// Question categories (string-based; no extra table)
+router.get("/question-categories", async (_req, res, next) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT category AS name, COUNT(*) AS count
+         FROM questions
+        WHERE category IS NOT NULL AND category <> ''
+        GROUP BY category
+        ORDER BY count DESC, name ASC
+        LIMIT 200`
+    );
+    res.json({ categories: rows || [] });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/question-categories", async (req, res, next) => {
+  try {
+    const name = String(req.body.name || "").trim();
+    if (!name) return res.status(400).json({ error: "请填写分类名称" });
+    // No-op create: categories are derived from questions; keep this endpoint for UX consistency.
+    res.status(201).json({ ok: true, name });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.put("/question-categories/:name", async (req, res, next) => {
+  try {
+    const from = String(req.params.name || "").trim();
+    const to = String(req.body.name || "").trim();
+    if (!from) return res.status(400).json({ error: "原分类不能为空" });
+    if (!to) return res.status(400).json({ error: "请填写新分类名称" });
+    const pool = getPool();
+    const [r] = await pool.query("UPDATE questions SET category=? WHERE category=?", [to, from]);
+    await writeAuditLog({
+      actorEmployeeId: getActorEmployeeId(req),
+      action: "update",
+      entityType: "question_category",
+      entityId: null,
+      meta: { from, to, affected: Number(r.affectedRows || 0) },
+      ip: getIp(req),
+      userAgent: getUA(req)
+    });
+    res.json({ ok: true, from, to, affected: Number(r.affectedRows || 0) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.delete("/question-categories/:name", async (req, res, next) => {
+  try {
+    const name = String(req.params.name || "").trim();
+    if (!name) return res.status(400).json({ error: "分类不能为空" });
+    const pool = getPool();
+    const [r] = await pool.query("UPDATE questions SET category=NULL WHERE category=?", [name]);
+    await writeAuditLog({
+      actorEmployeeId: getActorEmployeeId(req),
+      action: "delete",
+      entityType: "question_category",
+      entityId: null,
+      meta: { name, affected: Number(r.affectedRows || 0) },
+      ip: getIp(req),
+      userAgent: getUA(req)
+    });
+    res.json({ ok: true, name, affected: Number(r.affectedRows || 0) });
+  } catch (e) {
+    next(e);
+  }
+});
+
 // Invitations (invite link / QR)
 router.post("/invitations", async (req, res, next) => {
   try {

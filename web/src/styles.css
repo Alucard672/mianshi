@@ -2,19 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Subtle grid + glow for "AG IDE" vibe */
+/* Light, warm surface + rich accents */
 body {
   background-image:
-    radial-gradient(700px 360px at 18% 12%, rgba(255, 206, 122, 0.22), transparent 62%),
-    radial-gradient(620px 320px at 78% 18%, rgba(255, 138, 91, 0.18), transparent 62%),
-    radial-gradient(520px 260px at 55% 0%, rgba(255, 241, 214, 0.06), transparent 55%),
-    linear-gradient(to bottom, #140f0a, #0f0b08);
+    radial-gradient(900px 460px at 10% 10%, rgba(245, 158, 11, 0.22), transparent 60%),
+    radial-gradient(880px 440px at 85% 18%, rgba(37, 99, 235, 0.18), transparent 62%),
+    radial-gradient(720px 380px at 55% 0%, rgba(236, 72, 153, 0.10), transparent 60%),
+    linear-gradient(to bottom, #ffffff, #fff7ed);
+  color: #0f172a;
 }
 
 .grid-overlay {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
   background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse at top, rgba(0, 0, 0, 0.9), transparent 65%);
+  mask-image: radial-gradient(ellipse at top, rgba(0, 0, 0, 0.55), transparent 68%);
+}
+
+/* Global utility overrides to shift existing dark-glass pages to light theme
+   without rewriting every template. */
+.text-white { color: #0f172a !important; }
+.text-white\/90 { color: #0f172a !important; }
+.text-white\/85 { color: #0f172a !important; }
+.text-white\/80 { color: #1f2937 !important; }
+.text-white\/75 { color: #334155 !important; }
+.text-white\/70 { color: #334155 !important; }
+.text-white\/60 { color: #475569 !important; }
+.text-white\/55 { color: #64748b !important; }
+.text-white\/50 { color: #64748b !important; }
+
+.border-white\/10 { border-color: rgba(15, 23, 42, 0.12) !important; }
+.border-white\/08 { border-color: rgba(15, 23, 42, 0.10) !important; }
+.border-white\/30 { border-color: rgba(15, 23, 42, 0.18) !important; }
+
+.bg-black\/25 { background-color: rgba(255, 255, 255, 0.72) !important; }
+.bg-black\/40 { background-color: rgba(255, 255, 255, 0.86) !important; }
+.bg-white\/5 { background-color: rgba(15, 23, 42, 0.04) !important; }
+.bg-white\/10 { background-color: rgba(15, 23, 42, 0.06) !important; }
+.bg-bg1\/60 { background-color: rgba(255, 247, 237, 0.85) !important; }
+
+/* Form controls from @tailwindcss/forms look odd on translucent surfaces; soften */
+input, textarea, select {
+  color: #0f172a;
 }

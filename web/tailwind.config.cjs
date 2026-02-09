@@ -8,11 +8,11 @@ module.exports = {
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"]
       },
       colors: {
-        // Warm, less-inky palette (system was too dark/cold).
-        bg0: "#140F0A", // warm near-black
-        bg1: "#1E1510", // panel background
-        neon: "#FFCE7A", // amber highlight
-        cyan: "#FF8A5B" // coral primary
+        // Light, rich palette (white main surface + colorful accents).
+        bg0: "#FFFFFF", // main surface
+        bg1: "#FFF7ED", // warm panel tint
+        neon: "#F59E0B", // amber highlight
+        cyan: "#2563EB" // blue primary
       }
     }
   },
