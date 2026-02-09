@@ -366,15 +366,12 @@ router.post("/employees", requireAdminRole, async (req, res, next) => {
     if (!username) return res.status(400).json({ error: "请填写员工用户名" });
     if (!["staff", "admin"].includes(role)) return res.status(400).json({ error: "role 仅支持 staff/admin" });
 
-    // generate one-time access token (show once)
-    const accessToken = crypto.randomUUID();
-    const accessTokenHash = sha256Hex(accessToken);
     const passwordHash = password ? sha256Hex(password) : null;
 
     const pool = getPool();
     const [r] = await pool.query(
       "INSERT INTO employees (name, email, phone, username, password_hash, role, status, access_token_hash) VALUES (?,?,?,?,?,?,?,?)",
-      [name, email, phone, username, passwordHash, role, "active", accessTokenHash]
+      [name, email, phone, username, passwordHash, role, "active", null]
     );
     await writeAuditLog({
       actorEmployeeId: getActorEmployeeId(req),
@@ -386,8 +383,7 @@ router.post("/employees", requireAdminRole, async (req, res, next) => {
       userAgent: getUA(req)
     });
     res.status(201).json({
-      employee: { id: r.insertId, name, email, phone, username, role, status: "active" },
-      accessToken
+      employee: { id: r.insertId, name, email, phone, username, role, status: "active" }
     });
   } catch (e) {
     if (e && e.code === "ER_DUP_ENTRY") return res.status(400).json({ error: "邮箱或用户名已存在" });

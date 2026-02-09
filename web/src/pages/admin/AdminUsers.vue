@@ -55,12 +55,7 @@
             </select>
           </div>
           <div class="mt-3 flex justify-end">
-            <button class="btn btn-primary" @click="createEmployee">创建并生成授权码</button>
-          </div>
-
-          <div v-if="lastIssuedToken" class="mt-3 rounded-xl border border-neon/30 bg-neon/10 p-3">
-            <div class="text-[11px] font-mono text-neon">员工授权码（只展示一次）</div>
-            <div class="mt-2 text-xs font-mono break-all text-white/90">{{ lastIssuedToken }}</div>
+            <button class="btn btn-primary" @click="createEmployee">创建员工账号</button>
           </div>
         </div>
       </div>
@@ -88,7 +83,6 @@ const tab = ref("candidates");
 
 const candidates = ref([]);
 const employees = ref([]);
-const lastIssuedToken = ref("");
 
 const candForm = reactive({ username: "", email: "", phone: "" });
 const empForm = reactive({ name: "", phone: "", email: "", username: "", password: "", role: "staff" });
@@ -141,7 +135,6 @@ async function createCandidate() {
 async function createEmployee() {
   if (!isAdmin.value) return;
   error.value = "";
-  lastIssuedToken.value = "";
   try {
     const { data } = await http.post("/api/admin/employees", {
       name: empForm.name,
@@ -157,7 +150,6 @@ async function createEmployee() {
     empForm.username = "";
     empForm.password = "";
     empForm.role = "staff";
-    lastIssuedToken.value = data.accessToken || "";
     employees.value = [data.employee, ...employees.value];
   } catch (e) {
     error.value = e?.response?.data?.error || e?.message || "创建失败";
