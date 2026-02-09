@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS interviews (
   user_id BIGINT NOT NULL,
   job_id BIGINT NOT NULL,
   invite_id BIGINT DEFAULT NULL,
+  public_token VARCHAR(64) DEFAULT NULL,
   resume_path TEXT,
   resume_file_id TEXT DEFAULT NULL,
   -- optional single image attachment on apply (e.g. avatar/portfolio screenshot)

@@ -41,18 +41,23 @@
       </div>
     </div>
 
-    <div v-if="detail" class="rounded-2xl border border-white/10 bg-bg1/60 p-5">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <div class="text-xs font-mono text-white/60">详情</div>
-          <div class="mt-1 text-sm font-mono text-white/85">
+      <div v-if="detail" class="rounded-2xl border border-white/10 bg-bg1/60 p-5">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-xs font-mono text-white/60">详情</div>
+            <div class="mt-1 text-sm font-mono text-white/85">
             #{{ detail.id }} | {{ detail.user.username }} | {{ detail.job.title }}
+            </div>
+            <div class="mt-2 text-[11px] font-mono text-white/55">
+              {{ detail.user.phone || "-" }} | {{ detail.user.email || "-" }} | {{ detail.created_at }}
+            </div>
           </div>
-          <div class="mt-2 text-[11px] font-mono text-white/55">
-            {{ detail.user.phone || "-" }} | {{ detail.user.email || "-" }} | {{ detail.created_at }}
-          </div>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-primary" @click="sendSecondRound" :disabled="secondRoundLoading">
+            {{ secondRoundLoading ? "发送中..." : (detail.second_round_invited ? "再次发送复面通知" : "发送复面通知") }}
+          </button>
+          <button class="btn" @click="detail = null">关闭</button>
         </div>
-        <button class="btn" @click="detail = null">关闭</button>
       </div>
 
       <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -104,6 +109,12 @@
             MatchRate: {{ detail.match_rate == null ? "-" : detail.match_rate }}%
           </div>
           <div class="mt-2 text-xs font-mono text-white/80">
+            Stage: {{ detail.stage || "-" }}
+          </div>
+          <div class="mt-2 text-xs font-mono text-white/80">
+            复面通知: {{ detail.second_round_invited ? "已发送" : "未发送" }}
+          </div>
+          <div class="mt-2 text-xs font-mono text-white/80">
             关键词: {{ detail.user_keywords || "-" }}
           </div>
         </div>
@@ -119,6 +130,7 @@ import { http, uploadsUrl } from "../../api";
 const error = ref("");
 const interviews = ref([]);
 const detail = ref(null);
+const secondRoundLoading = ref(false);
 
 function resumeUrl(p) {
   return uploadsUrl(p);
@@ -141,6 +153,20 @@ async function openDetail(id) {
     detail.value = data.interview;
   } catch (e) {
     error.value = e?.response?.data?.error || e?.message || "加载失败";
+  }
+}
+
+async function sendSecondRound() {
+  if (!detail.value?.id) return;
+  error.value = "";
+  secondRoundLoading.value = true;
+  try {
+    const { data } = await http.post(`/api/admin/interviews/${detail.value.id}/second-round`);
+    detail.value = { ...detail.value, stage: data.stage, second_round_invited: true };
+  } catch (e) {
+    error.value = e?.response?.data?.error || e?.message || "发送失败";
+  } finally {
+    secondRoundLoading.value = false;
   }
 }
 

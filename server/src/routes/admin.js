@@ -866,4 +866,39 @@ router.delete("/posts/:postId", async (req, res, next) => {
   }
 });
 
+// Send (or re-send) second-round notice (system record only for MVP).
+router.post("/interviews/:interviewId/second-round", async (req, res, next) => {
+  try {
+    const interviewId = Number(req.params.interviewId);
+    if (!Number.isFinite(interviewId)) return res.status(400).json({ error: "interviewId 参数不合法" });
+    const pool = getPool();
+    const [[row]] = await pool.query(
+      `SELECT i.id, i.stage, i.second_round_invited,
+              u.email AS user_email, u.phone AS user_phone
+         FROM interviews i
+         JOIN users u ON u.id = i.user_id
+        WHERE i.id=?
+        LIMIT 1`,
+      [interviewId]
+    );
+    if (!row) return res.status(404).json({ error: "未找到面试记录" });
+
+    await pool.query("UPDATE interviews SET second_round_invited=1, stage=? WHERE id=?", ["SECOND_ROUND_INVITED", interviewId]);
+
+    await writeAuditLog({
+      actorEmployeeId: getActorEmployeeId(req),
+      action: "update",
+      entityType: "interview",
+      entityId: interviewId,
+      meta: { second_round_invited: true, to: { email: row.user_email || null, phone: row.user_phone || null } },
+      ip: getIp(req),
+      userAgent: getUA(req)
+    });
+
+    res.json({ ok: true, interviewId, stage: "SECOND_ROUND_INVITED", second_round_invited: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
 module.exports = router;
