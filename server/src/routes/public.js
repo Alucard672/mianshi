@@ -17,20 +17,34 @@ function uuidFilename(originalName) {
   return `${crypto.randomUUID()}${ext}`;
 }
 
-const resumeUpload = multer({
+const applyUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, uploadsDir),
     filename: (_req, file, cb) => cb(null, uuidFilename(file.originalname))
   }),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  // Keep a higher global ceiling; enforce per-field limits in handler.
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
   fileFilter: (_req, file, cb) => {
-    const ok = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ].includes(file.mimetype);
-    if (!ok) return cb(new Error("不支持的简历文件类型（仅支持 PDF/Word）"));
-    cb(null, true);
+    if (file.fieldname === "resume") {
+      const ok = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ].includes(file.mimetype);
+      if (!ok) return cb(new Error("不支持的简历文件类型（仅支持 PDF/Word）"));
+      return cb(null, true);
+    }
+    if (file.fieldname === "image") {
+      const ok = ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype);
+      if (!ok) return cb(new Error("不支持的图片类型（仅支持 JPG/PNG/WebP）"));
+      return cb(null, true);
+    }
+    if (file.fieldname === "video") {
+      const ok = ["video/mp4"].includes(file.mimetype);
+      if (!ok) return cb(new Error("不支持的视频类型（仅支持 MP4）"));
+      return cb(null, true);
+    }
+    return cb(new Error(`不支持的上传字段：${file.fieldname}`));
   }
 });
 
@@ -67,8 +81,17 @@ router.get("/posts/:slug", async (req, res, next) => {
 //  - job_id (required, must belong to post)
 //  - name/phone/email (required)
 //  - user_keywords (optional)
-//  - resume (required)
-router.post("/posts/:slug/apply", resumeUpload.single("resume"), async (req, res, next) => {
+//  - resume (required, PDF/Word <= 5MB)
+//  - image (optional, JPG/PNG/WebP <= 5MB)
+//  - video (optional, MP4 <= 50MB)
+router.post(
+  "/posts/:slug/apply",
+  applyUpload.fields([
+    { name: "resume", maxCount: 1 },
+    { name: "image", maxCount: 1 },
+    { name: "video", maxCount: 1 }
+  ]),
+  async (req, res, next) => {
   try {
     const slug = String(req.params.slug || "").trim();
     if (!slug) return res.status(400).json({ error: "slug 不能为空" });
@@ -84,8 +107,17 @@ router.post("/posts/:slug/apply", resumeUpload.single("resume"), async (req, res
     if (!phone) return res.status(400).json({ error: "请填写手机号" });
     if (!email) return res.status(400).json({ error: "请填写邮箱" });
 
-    const resumeFile = req.file;
+    const resumeFile = (req.files?.resume || [])[0];
     if (!resumeFile) return res.status(400).json({ error: "请上传简历文件（resume）" });
+    if (Number(resumeFile.size || 0) > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: "简历文件过大（最大 5MB）" });
+    }
+
+    const imageFile = (req.files?.image || [])[0] || null;
+    if (imageFile && Number(imageFile.size || 0) > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: "图片文件过大（最大 5MB）" });
+    }
+    const videoFile = (req.files?.video || [])[0] || null;
 
     const pool = getPool();
     const [[post]] = await pool.query("SELECT id, title, slug, status FROM job_posts WHERE slug=? LIMIT 1", [
@@ -134,6 +166,42 @@ router.post("/posts/:slug/apply", resumeUpload.single("resume"), async (req, res
       resumePath = resumeUrl || resumePath;
     }
 
+    // Optional image
+    let imagePath = null;
+    let imageFileId = null;
+    let imageUrl = null;
+    if (imageFile) {
+      const imageAbsPath = path.join(uploadsDir, imageFile.filename);
+      imagePath = `/uploads/${imageFile.filename}`;
+      if (hasCloudBaseConfig()) {
+        const up = await uploadLocalFileToCloudBase({
+          localPath: imageAbsPath,
+          cloudPathPrefix: "uploads/images"
+        });
+        imageFileId = up.fileID;
+        imageUrl = up.tempUrl || null;
+        imagePath = imageUrl || imagePath;
+      }
+    }
+
+    // Optional intro video (reuses interviews.video_* columns)
+    let videoPath = null;
+    let videoFileId = null;
+    let videoUrl = null;
+    if (videoFile) {
+      const videoAbsPath = path.join(uploadsDir, videoFile.filename);
+      videoPath = `/uploads/${videoFile.filename}`;
+      if (hasCloudBaseConfig()) {
+        const up = await uploadLocalFileToCloudBase({
+          localPath: videoAbsPath,
+          cloudPathPrefix: "uploads/intro-videos"
+        });
+        videoFileId = up.fileID;
+        videoUrl = up.tempUrl || null;
+        videoPath = videoUrl || videoPath;
+      }
+    }
+
     // OCR parse (best-effort)
     let resumeText = "";
     try {
@@ -155,8 +223,23 @@ router.post("/posts/:slug/apply", resumeUpload.single("resume"), async (req, res
     const stage = matchRate >= 60 ? "RESUME_PASSED" : "RESUME_SUBMITTED";
 
     const [ir] = await pool.query(
-      "INSERT INTO interviews (user_id, job_id, invite_id, resume_path, resume_file_id, video_path, video_file_id, user_keywords, resume_text, match_rate, total_score, stage, second_round_invited) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0)",
-      [userId, jobId, null, resumePath, resumeFileId, null, null, mergedRaw, resumeText, matchRate, null, stage]
+      "INSERT INTO interviews (user_id, job_id, invite_id, resume_path, resume_file_id, image_path, image_file_id, video_path, video_file_id, user_keywords, resume_text, match_rate, total_score, stage, second_round_invited) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)",
+      [
+        userId,
+        jobId,
+        null,
+        resumePath,
+        resumeFileId,
+        imagePath,
+        imageFileId,
+        videoPath,
+        videoFileId,
+        mergedRaw,
+        resumeText,
+        matchRate,
+        null,
+        stage
+      ]
     );
     const interviewId = ir.insertId;
 
@@ -188,12 +271,18 @@ router.post("/posts/:slug/apply", resumeUpload.single("resume"), async (req, res
       resumePath,
       resumeFileId,
       resumeUrl,
+      imagePath,
+      imageFileId,
+      imageUrl,
+      videoPath,
+      videoFileId,
+      videoUrl,
       matchRate: Number(Number(matchRate || 0).toFixed(2)),
       stage,
       questions
     });
   } catch (e) {
-    if (e && e.code === "LIMIT_FILE_SIZE") return res.status(400).json({ error: "简历文件过大（最大 5MB）" });
+    if (e && e.code === "LIMIT_FILE_SIZE") return res.status(400).json({ error: "上传文件过大（最大 50MB）" });
     if (e && String(e.message || "").includes("不支持")) return res.status(400).json({ error: e.message });
     next(e);
   }

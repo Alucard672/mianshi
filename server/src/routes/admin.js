@@ -593,7 +593,7 @@ router.get("/interviews", async (_req, res, next) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      `SELECT i.id, i.created_at, i.stage, i.match_rate, i.total_score, i.resume_path,
+      `SELECT i.id, i.created_at, i.stage, i.match_rate, i.total_score, i.resume_path, i.image_path, i.video_path,
               u.id AS user_id, u.username AS user_name, u.email AS user_email, u.phone AS user_phone,
               j.id AS job_id, j.title AS job_title
          FROM interviews i
@@ -614,7 +614,10 @@ router.get("/interviews/:interviewId", async (req, res, next) => {
     if (!Number.isFinite(interviewId)) return res.status(400).json({ error: "interviewId 参数不合法" });
     const pool = getPool();
     const [[row]] = await pool.query(
-      `SELECT i.id, i.created_at, i.stage, i.match_rate, i.total_score, i.resume_path, i.resume_file_id,
+      `SELECT i.id, i.created_at, i.stage, i.match_rate, i.total_score,
+              i.resume_path, i.resume_file_id,
+              i.image_path, i.image_file_id,
+              i.video_path, i.video_file_id,
               i.user_keywords, i.resume_text, i.second_round_invited,
               u.id AS user_id, u.username AS user_name, u.email AS user_email, u.phone AS user_phone,
               j.id AS job_id, j.title AS job_title, j.target_keywords
@@ -647,6 +650,10 @@ router.get("/interviews/:interviewId", async (req, res, next) => {
         total_score: row.total_score,
         resume_path: row.resume_path,
         resume_file_id: row.resume_file_id,
+        image_path: row.image_path,
+        image_file_id: row.image_file_id,
+        video_path: row.video_path,
+        video_file_id: row.video_file_id,
         user_keywords: row.user_keywords,
         resume_text: row.resume_text,
         second_round_invited: Boolean(row.second_round_invited),

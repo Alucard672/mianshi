@@ -17,8 +17,9 @@
         <h1 class="mt-2 text-2xl sm:text-3xl font-mono font-semibold tracking-tight">
           {{ post?.title || "岗位报名" }}
         </h1>
-        <div class="mt-3 text-sm text-white/70">
-          选择岗位，填写资料并上传简历（PDF/Word，<= 5MB）。提交后会自动进入系统，供 HR 在后台查看。
+          <div class="mt-3 text-sm text-white/70">
+          选择岗位，填写资料并上传简历（PDF/Word，<= 5MB）。可选上传图片（JPG/PNG/WebP，<= 5MB）与视频（MP4，<= 50MB）。
+          提交后会自动进入系统，供 HR 在后台查看。
         </div>
       </div>
 
@@ -83,6 +84,24 @@
                 class="mt-2 block w-full text-xs font-mono text-white/70"
               />
             </div>
+            <div>
+              <label class="block text-xs font-mono text-white/60">图片（可选，JPG/PNG/WebP，<= 5MB）</label>
+              <input
+                ref="imageRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="mt-2 block w-full text-xs font-mono text-white/70"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-mono text-white/60">视频（可选，MP4，<= 50MB）</label>
+              <input
+                ref="videoRef"
+                type="file"
+                accept="video/mp4"
+                class="mt-2 block w-full text-xs font-mono text-white/70"
+              />
+            </div>
           </div>
 
           <div class="mt-5 flex items-center justify-between gap-3">
@@ -129,6 +148,8 @@ const error = ref("");
 const loading = ref(false);
 const success = ref(null);
 const resumeRef = ref(null);
+const imageRef = ref(null);
+const videoRef = ref(null);
 
 const form = ref({
   jobId: String(route.query.jobId || ""),
@@ -177,6 +198,8 @@ async function submit() {
   error.value = "";
   success.value = null;
   const resumeFile = resumeRef.value?.files?.[0];
+  const imageFile = imageRef.value?.files?.[0];
+  const videoFile = videoRef.value?.files?.[0];
   if (!resumeFile) {
     error.value = "请上传简历。";
     return;
@@ -190,6 +213,8 @@ async function submit() {
     fd.append("email", String(form.value.email || ""));
     fd.append("user_keywords", String(form.value.keywords || ""));
     fd.append("resume", resumeFile);
+    if (imageFile) fd.append("image", imageFile);
+    if (videoFile) fd.append("video", videoFile);
 
     const { data } = await http.post(`/api/public/posts/${encodeURIComponent(slug)}/apply`, fd, {
       headers: { "content-type": "multipart/form-data" }
@@ -204,4 +229,3 @@ async function submit() {
 
 onMounted(load);
 </script>
-

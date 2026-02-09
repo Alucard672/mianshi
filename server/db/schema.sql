@@ -77,6 +77,9 @@ CREATE TABLE IF NOT EXISTS interviews (
   invite_id BIGINT DEFAULT NULL,
   resume_path TEXT,
   resume_file_id TEXT DEFAULT NULL,
+  -- optional single image attachment on apply (e.g. avatar/portfolio screenshot)
+  image_path TEXT DEFAULT NULL,
+  image_file_id TEXT DEFAULT NULL,
   -- initial intro video is no longer required; keep nullable for backward compat
   video_path TEXT,
   video_file_id TEXT DEFAULT NULL,

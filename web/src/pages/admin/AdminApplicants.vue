@@ -72,6 +72,33 @@
           </a>
         </div>
         <div class="rounded-xl border border-white/10 bg-black/25 p-4">
+          <div class="text-[11px] font-mono text-white/55">图片 / 视频</div>
+          <div class="mt-2 text-xs font-mono text-white/80 break-all">
+            图片：{{ detail.image_path || "-" }}
+          </div>
+          <a
+            v-if="detail.image_path"
+            class="mt-2 inline-block text-xs font-mono text-cyan hover:underline"
+            :href="resumeUrl(detail.image_path)"
+            target="_blank"
+            rel="noreferrer"
+          >
+            打开图片
+          </a>
+          <div class="mt-3 text-xs font-mono text-white/80 break-all">
+            视频：{{ detail.video_path || "-" }}
+          </div>
+          <a
+            v-if="detail.video_path"
+            class="mt-2 inline-block text-xs font-mono text-cyan hover:underline"
+            :href="resumeUrl(detail.video_path)"
+            target="_blank"
+            rel="noreferrer"
+          >
+            打开视频
+          </a>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-black/25 p-4">
           <div class="text-[11px] font-mono text-white/55">筛选</div>
           <div class="mt-2 text-xs font-mono text-white/80">
             MatchRate: {{ detail.match_rate == null ? "-" : detail.match_rate }}%
@@ -141,4 +168,3 @@ onMounted(load);
 }
 .btn-primary:hover { background: rgba(124, 255, 178, 0.14); }
 </style>
-
