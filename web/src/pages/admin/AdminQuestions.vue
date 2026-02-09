@@ -5,7 +5,11 @@
         <div class="text-xs font-mono text-white/60">题库管理</div>
         <div class="mt-2 text-sm text-white/70">维护题库，简历通过后随机抽题。</div>
       </div>
-      <button class="btn" @click="load">刷新</button>
+      <div class="flex items-center gap-2">
+        <button class="btn" @click="showCategories = !showCategories">{{ showCategories ? "收起分类" : "分类管理" }}</button>
+        <button class="btn" @click="showCreate = !showCreate">{{ showCreate ? "收起新增" : "新增题目" }}</button>
+        <button class="btn" @click="load">刷新</button>
+      </div>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
@@ -17,7 +21,7 @@
       <div class="text-[11px] font-mono text-white/55">共 {{ filtered.length }} 条</div>
     </div>
 
-    <div class="rounded-xl border border-white/10 bg-black/25 p-4">
+    <div v-if="showCategories" class="rounded-xl border border-white/10 bg-black/25 p-4">
       <div class="text-[11px] font-mono text-white/55">分类管理</div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <input v-model="newCategoryName" class="input !py-2" placeholder="新增分类名称" />
@@ -52,7 +56,7 @@
       </div>
     </div>
 
-    <div class="rounded-xl border border-white/10 bg-black/25 p-4">
+    <div v-if="showCreate" class="rounded-xl border border-white/10 bg-black/25 p-4">
       <div class="text-[11px] font-mono text-white/55">新增题目</div>
       <div class="mt-3 grid grid-cols-1 gap-3">
         <textarea v-model="form.content" class="input min-h-[92px]" placeholder="题目内容" />
@@ -105,6 +109,8 @@ import { http } from "../../api";
 const questions = ref([]);
 const error = ref("");
 const form = reactive({ content: "", category: "" });
+const showCategories = ref(false);
+const showCreate = ref(false);
 
 const filters = reactive({ category: "", q: "" });
 
@@ -160,6 +166,7 @@ async function create() {
     form.content = "";
     form.category = "";
     questions.value = [data.question, ...questions.value];
+    showCreate.value = false;
     await loadCategories();
   } catch (e) {
     error.value = e?.response?.data?.error || e?.message || "新增失败";
@@ -264,27 +271,3 @@ async function clearCategory(name) {
 
 onMounted(load);
 </script>
-
-<style scoped>
-.input {
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  color: rgba(255, 255, 255, 0.9);
-  padding: 10px 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-}
-.btn {
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.75);
-  padding: 10px 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-}
-.btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); }
-.btn-primary { border-color: rgba(124,255,178,0.25); background: rgba(124,255,178,0.10); color: rgba(124,255,178,0.95); }
-.btn-primary:hover { background: rgba(124,255,178,0.14); }
-</style>

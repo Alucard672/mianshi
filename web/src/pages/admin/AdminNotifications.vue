@@ -94,43 +94,11 @@ onMounted(reload);
 </script>
 
 <style scoped>
-.btn {
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.75);
-  padding: 10px 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-}
-.btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); }
-.btn-primary {
-  border-color: rgba(124, 255, 178, 0.25);
-  background: rgba(124, 255, 178, 0.10);
-  color: rgba(124, 255, 178, 0.95);
-}
-.btn-primary:hover { background: rgba(124,255,178,0.14); }
-.tab {
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.70);
-  padding: 8px 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-}
-.tab:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
-.tab-on {
-  border-color: rgba(100,210,255,0.35);
-  background: rgba(100,210,255,0.12);
-  color: rgba(100,210,255,0.95);
-}
 .row {
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.10);
 }
 .row:last-child { border-bottom: none; }
-.row-unread { background: rgba(100, 210, 255, 0.04); }
+.row-unread { background: rgba(37, 99, 235, 0.06); }
 .row-read { background: transparent; }
 </style>
-

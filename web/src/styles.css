@@ -37,7 +37,10 @@ body {
 .border-white\/30 { border-color: rgba(15, 23, 42, 0.18) !important; }
 
 .bg-black\/25 { background-color: rgba(255, 255, 255, 0.72) !important; }
+.bg-black\/20 { background-color: rgba(15, 23, 42, 0.03) !important; }
+.bg-black\/30 { background-color: rgba(255, 255, 255, 0.82) !important; }
 .bg-black\/40 { background-color: rgba(255, 255, 255, 0.86) !important; }
+.bg-black\/60 { background-color: rgba(255, 255, 255, 0.92) !important; }
 .bg-white\/5 { background-color: rgba(15, 23, 42, 0.04) !important; }
 .bg-white\/10 { background-color: rgba(15, 23, 42, 0.06) !important; }
 .bg-bg1\/60 { background-color: rgba(255, 247, 237, 0.85) !important; }
@@ -45,4 +48,77 @@ body {
 /* Form controls from @tailwindcss/forms look odd on translucent surfaces; soften */
 input, textarea, select {
   color: #0f172a;
+}
+
+@layer components {
+  .input {
+    width: 100%;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: rgba(15, 23, 42, 0.92);
+    padding: 10px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    outline: none;
+  }
+  .input:focus {
+    border-color: rgba(37, 99, 235, 0.35);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+
+  .btn {
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.70);
+    color: rgba(15, 23, 42, 0.72);
+    padding: 10px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+  }
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.92);
+    color: rgba(15, 23, 42, 0.92);
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    border-color: rgba(37, 99, 235, 0.26);
+    background: rgba(37, 99, 235, 0.10);
+    color: rgba(30, 64, 175, 0.95);
+  }
+  .btn-primary:hover {
+    background: rgba(37, 99, 235, 0.14);
+  }
+
+  .btn-danger {
+    border-color: rgba(239, 68, 68, 0.26);
+    background: rgba(239, 68, 68, 0.08);
+    color: rgba(185, 28, 28, 0.95);
+  }
+  .btn-danger:hover {
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .tab {
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.60);
+    color: rgba(15, 23, 42, 0.68);
+    padding: 8px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+  }
+  .tab:hover {
+    background: rgba(255, 255, 255, 0.90);
+    color: rgba(15, 23, 42, 0.90);
+  }
+  .tab-on {
+    border-color: rgba(37, 99, 235, 0.26);
+    background: rgba(37, 99, 235, 0.10);
+    color: rgba(30, 64, 175, 0.95);
+  }
 }

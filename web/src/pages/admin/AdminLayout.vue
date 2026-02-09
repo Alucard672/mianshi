@@ -75,11 +75,11 @@
           <div class="text-[11px] font-mono text-white/55 px-2">导航</div>
           <nav class="mt-3 space-y-1">
             <RouterLink class="nav" to="/admin/home">首页</RouterLink>
-            <RouterLink class="nav" to="/admin/users">用户管理</RouterLink>
             <RouterLink class="nav" to="/admin/applicants">面试人员</RouterLink>
             <RouterLink class="nav" to="/admin/questions">题库管理</RouterLink>
             <RouterLink class="nav" to="/admin/jobs">岗位管理</RouterLink>
             <RouterLink class="nav" to="/admin/posts">职位发布</RouterLink>
+            <RouterLink class="nav" to="/admin/users">员工管理</RouterLink>
             <RouterLink class="nav" to="/admin/audit">操作记录</RouterLink>
           </nav>
 
@@ -92,7 +92,7 @@
         </aside>
 
         <section class="lg:col-span-9 xl:col-span-10">
-          <div class="rounded-2xl border border-white/10 bg-bg1/60 p-5">
+          <div class="rounded-2xl border border-white/10 bg-white/70 p-5 shadow-sm">
             <RouterView />
           </div>
         </section>
@@ -245,41 +245,41 @@ onBeforeUnmount(() => {
   display: block;
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(15, 23, 42, 0.82);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 12px;
 }
 .nav:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.85);
+  color: rgba(15, 23, 42, 0.95);
 }
 .router-link-active {
-  border-color: rgba(100, 210, 255, 0.35);
-  background: rgba(100, 210, 255, 0.12);
-  color: rgba(100, 210, 255, 0.95);
+  border-color: rgba(37, 99, 235, 0.28);
+  background: rgba(37, 99, 235, 0.10);
+  color: rgba(30, 64, 175, 0.95);
 }
 
 .mini {
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(15, 23, 42, 0.72);
   padding: 6px 10px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
 }
-.mini:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); }
+.mini:hover { background: rgba(255,255,255,0.92); color: rgba(15, 23, 42, 0.92); }
 .mini:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .ntf {
   padding: 12px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.10);
   cursor: pointer;
 }
 .ntf:last-child { border-bottom: none; }
-.ntf-unread { background: rgba(100, 210, 255, 0.05); }
+.ntf-unread { background: rgba(37, 99, 235, 0.06); }
 .ntf-read { background: transparent; }
-.ntf:hover { background: rgba(255, 255, 255, 0.05); }
+.ntf:hover { background: rgba(15, 23, 42, 0.04); }
 </style>

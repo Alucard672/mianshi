@@ -45,17 +45,3 @@ async function load() {
 
 onMounted(load);
 </script>
-
-<style scoped>
-.btn {
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.75);
-  padding: 10px 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-}
-.btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); }
-</style>
-

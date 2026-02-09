@@ -7,10 +7,13 @@
           选择多个岗位生成一个对外展示页面（响应式），并生成分享链接与二维码。
         </div>
       </div>
-      <button class="btn" @click="loadAll">刷新</button>
+      <div class="flex items-center gap-2">
+        <button class="btn" @click="showCreate = !showCreate">{{ showCreate ? "收起新增" : "新增发布页" }}</button>
+        <button class="btn" @click="loadAll">刷新</button>
+      </div>
     </div>
 
-    <div class="rounded-xl border border-white/10 bg-black/25 p-4">
+    <div v-if="showCreate" class="rounded-xl border border-white/10 bg-black/25 p-4">
       <div class="text-[11px] font-mono text-white/55">创建发布页</div>
       <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input v-model="form.title" class="input" placeholder="发布页标题（例如：杭州衣科 2026 春招）" />
@@ -83,6 +86,7 @@ import { http } from "../../api";
 const error = ref("");
 const jobs = ref([]);
 const posts = ref([]);
+const showCreate = ref(false);
 
 const form = reactive({
   title: "",
@@ -127,6 +131,7 @@ async function createPost() {
     posts.value = [data.post, ...posts.value];
     created.url = publicUrl(data.post.slug);
     created.qr = await QRCode.toDataURL(created.url, { errorCorrectionLevel: "M", margin: 1, scale: 6 });
+    showCreate.value = true;
     form.title = "";
     form.slug = "";
     form.description = "";
@@ -148,27 +153,3 @@ async function remove(p) {
 
 onMounted(loadAll);
 </script>
-
-<style scoped>
-.input {
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  color: rgba(255, 255, 255, 0.9);
-  padding: 10px 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-}
-.btn {
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.75);
-  padding: 10px 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-}
-.btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); }
-.btn-primary { border-color: rgba(100,210,255,0.25); background: rgba(100,210,255,0.10); color: rgba(100,210,255,0.95); }
-.btn-primary:hover { background: rgba(100,210,255,0.14); }
-</style>
