@@ -29,8 +29,40 @@
 
       <div class="space-y-2 max-h-[520px] overflow-auto">
         <div v-for="u in candidates" :key="u.id" class="rounded-xl border border-white/10 bg-white/5 p-4">
-          <div class="text-xs font-mono text-white/85">#{{ u.id }} {{ u.username }}</div>
-          <div class="mt-2 text-[11px] font-mono text-white/55">{{ u.phone || "-" }} | {{ u.email }} | {{ u.created_at }}</div>
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-xs font-mono text-white/85">#{{ u.id }} {{ u.username }}</div>
+              <div class="mt-2 text-[11px] font-mono text-white/55">
+                {{ u.phone || "-" }} | {{ u.email }} | {{ u.status || "active" }} | {{ u.created_at }}
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn" @click="beginEditCandidate(u)">编辑</button>
+              <button
+                class="btn"
+                :class="String(u.status || 'active') === 'disabled' ? 'btn-primary' : ''"
+                @click="toggleCandidate(u)"
+              >
+                {{ String(u.status || "active") === "disabled" ? "启用" : "停用" }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="editingCandId === u.id" class="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input v-model="candEdit.username" class="input" placeholder="姓名/昵称" />
+              <input v-model="candEdit.email" class="input" placeholder="邮箱" />
+              <input v-model="candEdit.phone" class="input" placeholder="手机号（可选）" />
+              <select v-model="candEdit.status" class="input">
+                <option value="active">active</option>
+                <option value="disabled">disabled</option>
+              </select>
+            </div>
+            <div class="mt-3 flex justify-end gap-2">
+              <button class="btn" @click="cancelEditCandidate">取消</button>
+              <button class="btn btn-primary" @click="saveCandidate">保存</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -62,9 +94,45 @@
 
       <div class="space-y-2 max-h-[520px] overflow-auto">
         <div v-for="e in employees" :key="e.id" class="rounded-xl border border-white/10 bg-white/5 p-4">
-          <div class="text-xs font-mono text-white/85">#{{ e.id }} {{ e.name }} ({{ e.role }})</div>
-          <div class="mt-2 text-[11px] font-mono text-white/55">
-            {{ e.username }} | {{ e.phone || "-" }} | {{ e.email }} | {{ e.status }}
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-xs font-mono text-white/85">#{{ e.id }} {{ e.name }} ({{ e.role }})</div>
+              <div class="mt-2 text-[11px] font-mono text-white/55">
+                {{ e.username }} | {{ e.phone || "-" }} | {{ e.email }} | {{ e.status }}
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn" @click="beginEditEmployee(e)">编辑</button>
+              <button
+                class="btn"
+                :class="String(e.status || 'active') === 'disabled' ? 'btn-primary' : ''"
+                @click="toggleEmployee(e)"
+              >
+                {{ String(e.status || "active") === "disabled" ? "启用" : "停用" }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="editingEmpId === e.id" class="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input v-model="empEdit.name" class="input" placeholder="姓名" />
+              <input v-model="empEdit.phone" class="input" placeholder="手机号（可选）" />
+              <input v-model="empEdit.email" class="input" placeholder="邮箱" />
+              <input v-model="empEdit.username" class="input" placeholder="用户名" />
+              <input v-model="empEdit.password" class="input" placeholder="重置密码（可选）" />
+              <select v-model="empEdit.role" class="input">
+                <option value="staff">staff</option>
+                <option value="admin">admin</option>
+              </select>
+              <select v-model="empEdit.status" class="input">
+                <option value="active">active</option>
+                <option value="disabled">disabled</option>
+              </select>
+            </div>
+            <div class="mt-3 flex justify-end gap-2">
+              <button class="btn" @click="cancelEditEmployee">取消</button>
+              <button class="btn btn-primary" @click="saveEmployee">保存</button>
+            </div>
           </div>
         </div>
       </div>
@@ -86,6 +154,12 @@ const employees = ref([]);
 
 const candForm = reactive({ username: "", email: "", phone: "" });
 const empForm = reactive({ name: "", phone: "", email: "", username: "", password: "", role: "staff" });
+
+const editingCandId = ref(null);
+const candEdit = reactive({ id: null, username: "", email: "", phone: "", status: "active" });
+
+const editingEmpId = ref(null);
+const empEdit = reactive({ id: null, name: "", phone: "", email: "", username: "", password: "", role: "staff", status: "active" });
 
 const profile = computed(() => {
   try {
@@ -132,6 +206,60 @@ async function createCandidate() {
   }
 }
 
+function beginEditCandidate(u) {
+  if (!u) return;
+  editingCandId.value = u.id;
+  candEdit.id = u.id;
+  candEdit.username = u.username || "";
+  candEdit.email = u.email || "";
+  candEdit.phone = u.phone || "";
+  candEdit.status = String(u.status || "active");
+}
+
+function cancelEditCandidate() {
+  editingCandId.value = null;
+  candEdit.id = null;
+  candEdit.username = "";
+  candEdit.email = "";
+  candEdit.phone = "";
+  candEdit.status = "active";
+}
+
+async function saveCandidate() {
+  if (!editingCandId.value) return;
+  error.value = "";
+  try {
+    const { data } = await http.put(`/api/admin/users/${editingCandId.value}`, {
+      username: candEdit.username,
+      email: candEdit.email,
+      phone: candEdit.phone,
+      status: candEdit.status
+    });
+    candidates.value = candidates.value.map((x) => (x.id === editingCandId.value ? { ...x, ...data.user } : x));
+    cancelEditCandidate();
+  } catch (e) {
+    error.value = e?.response?.data?.error || e?.message || "保存失败";
+  }
+}
+
+async function toggleCandidate(u) {
+  if (!u) return;
+  const nextStatus = String(u.status || "active") === "disabled" ? "active" : "disabled";
+  error.value = "";
+  try {
+    const { data } = await http.put(`/api/admin/users/${u.id}`, {
+      username: u.username,
+      email: u.email,
+      phone: u.phone,
+      status: nextStatus
+    });
+    candidates.value = candidates.value.map((x) => (x.id === u.id ? { ...x, ...data.user } : x));
+    if (editingCandId.value === u.id) beginEditCandidate({ ...u, ...data.user });
+  } catch (e) {
+    error.value = e?.response?.data?.error || e?.message || "操作失败";
+  }
+}
+
 async function createEmployee() {
   if (!isAdmin.value) return;
   error.value = "";
@@ -153,6 +281,72 @@ async function createEmployee() {
     employees.value = [data.employee, ...employees.value];
   } catch (e) {
     error.value = e?.response?.data?.error || e?.message || "创建失败";
+  }
+}
+
+function beginEditEmployee(e) {
+  if (!e) return;
+  editingEmpId.value = e.id;
+  empEdit.id = e.id;
+  empEdit.name = e.name || "";
+  empEdit.phone = e.phone || "";
+  empEdit.email = e.email || "";
+  empEdit.username = e.username || "";
+  empEdit.password = "";
+  empEdit.role = String(e.role || "staff");
+  empEdit.status = String(e.status || "active");
+}
+
+function cancelEditEmployee() {
+  editingEmpId.value = null;
+  empEdit.id = null;
+  empEdit.name = "";
+  empEdit.phone = "";
+  empEdit.email = "";
+  empEdit.username = "";
+  empEdit.password = "";
+  empEdit.role = "staff";
+  empEdit.status = "active";
+}
+
+async function saveEmployee() {
+  if (!editingEmpId.value) return;
+  error.value = "";
+  try {
+    const body = {
+      name: empEdit.name,
+      phone: empEdit.phone,
+      email: empEdit.email,
+      username: empEdit.username,
+      role: empEdit.role,
+      status: empEdit.status
+    };
+    if (String(empEdit.password || "").trim()) body.password = String(empEdit.password || "").trim();
+    const { data } = await http.put(`/api/admin/employees/${editingEmpId.value}`, body);
+    employees.value = employees.value.map((x) => (x.id === editingEmpId.value ? { ...x, ...data.employee } : x));
+    cancelEditEmployee();
+  } catch (e) {
+    error.value = e?.response?.data?.error || e?.message || "保存失败";
+  }
+}
+
+async function toggleEmployee(e) {
+  if (!e) return;
+  const nextStatus = String(e.status || "active") === "disabled" ? "active" : "disabled";
+  error.value = "";
+  try {
+    const { data } = await http.put(`/api/admin/employees/${e.id}`, {
+      name: e.name,
+      phone: e.phone,
+      email: e.email,
+      username: e.username,
+      role: e.role,
+      status: nextStatus
+    });
+    employees.value = employees.value.map((x) => (x.id === e.id ? { ...x, ...data.employee } : x));
+    if (editingEmpId.value === e.id) beginEditEmployee({ ...e, ...data.employee });
+  } catch (e2) {
+    error.value = e2?.response?.data?.error || e2?.message || "操作失败";
   }
 }
 

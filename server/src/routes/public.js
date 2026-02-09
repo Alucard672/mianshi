@@ -138,15 +138,22 @@ router.post(
 
     // user: reuse by email if exists; otherwise create
     let userId = null;
-    const [[existing]] = await pool.query("SELECT id FROM users WHERE email=? ORDER BY id DESC LIMIT 1", [email]);
+    const [[existing]] = await pool.query(
+      "SELECT id, status FROM users WHERE email=? ORDER BY id DESC LIMIT 1",
+      [email]
+    );
     if (existing?.id) {
+      if (String(existing.status || "active") === "disabled") {
+        return res.status(403).json({ error: "该候选人账号已被停用，请联系管理员" });
+      }
       userId = Number(existing.id);
       await pool.query("UPDATE users SET username=?, phone=? WHERE id=?", [name, phone, userId]);
     } else {
-      const [ur] = await pool.query("INSERT INTO users (username, email, phone) VALUES (?,?,?)", [
+      const [ur] = await pool.query("INSERT INTO users (username, email, phone, status) VALUES (?,?,?,?)", [
         name,
         email,
-        phone
+        phone,
+        "active"
       ]);
       userId = ur.insertId;
     }

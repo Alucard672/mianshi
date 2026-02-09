@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
   phone VARCHAR(32) DEFAULT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'active', /* active/disabled */
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

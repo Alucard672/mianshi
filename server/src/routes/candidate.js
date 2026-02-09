@@ -103,14 +103,31 @@ router.post("/submit-resume", resumeUpload.single("resume"), async (req, res, ne
     if (!jobRows.length) return res.status(404).json({ error: "未找到该岗位" });
     const job = jobRows[0];
 
-    // user: existing or create
+    // user: existing or create (reuse by email to support disable/enable)
     let userId = req.body.user_id ? Number(req.body.user_id) : NaN;
     if (!Number.isFinite(userId)) {
       const username = String(req.body.username || "").trim();
       const email = String(req.body.email || "").trim();
       if (!username || !email) return res.status(400).json({ error: "请填写用户名和邮箱（或直接提供 user_id）" });
-      const [r] = await pool.query("INSERT INTO users (username, email) VALUES (?,?)", [username, email]);
-      userId = r.insertId;
+
+      const [[existingUser]] = await pool.query(
+        "SELECT id, status FROM users WHERE email=? ORDER BY id DESC LIMIT 1",
+        [email]
+      );
+      if (existingUser?.id) {
+        if (String(existingUser.status || "active") === "disabled") {
+          return res.status(403).json({ error: "该候选人账号已被停用，请联系管理员" });
+        }
+        userId = Number(existingUser.id);
+        await pool.query("UPDATE users SET username=? WHERE id=?", [username, userId]);
+      } else {
+        const [r] = await pool.query("INSERT INTO users (username, email, status) VALUES (?,?,?)", [
+          username,
+          email,
+          "active"
+        ]);
+        userId = r.insertId;
+      }
     }
 
     // OCR parse resume -> text

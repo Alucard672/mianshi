@@ -401,6 +401,7 @@ router.put("/employees/:employeeId", requireAdminRole, async (req, res, next) =>
     const phone = String(req.body.phone || "").trim() || null;
     const role = String(req.body.role || "staff").trim();
     const status = String(req.body.status || "active").trim();
+    const password = String(req.body.password || "").trim(); // optional reset
     if (!name) return res.status(400).json({ error: "请填写员工姓名" });
     if (!email) return res.status(400).json({ error: "请填写员工邮箱" });
     if (!username) return res.status(400).json({ error: "请填写员工用户名" });
@@ -408,21 +409,35 @@ router.put("/employees/:employeeId", requireAdminRole, async (req, res, next) =>
     if (!["active", "disabled"].includes(status)) return res.status(400).json({ error: "status 仅支持 active/disabled" });
 
     const pool = getPool();
-    await pool.query("UPDATE employees SET name=?, email=?, phone=?, username=?, role=?, status=? WHERE id=?", [
-      name,
-      email,
-      phone,
-      username,
-      role,
-      status,
-      employeeId
-    ]);
+    if (password) {
+      const passwordHash = sha256Hex(password);
+      await pool.query("UPDATE employees SET name=?, email=?, phone=?, username=?, role=?, status=?, password_hash=? WHERE id=?", [
+        name,
+        email,
+        phone,
+        username,
+        role,
+        status,
+        passwordHash,
+        employeeId
+      ]);
+    } else {
+      await pool.query("UPDATE employees SET name=?, email=?, phone=?, username=?, role=?, status=? WHERE id=?", [
+        name,
+        email,
+        phone,
+        username,
+        role,
+        status,
+        employeeId
+      ]);
+    }
     await writeAuditLog({
       actorEmployeeId: getActorEmployeeId(req),
       action: "update",
       entityType: "employee",
       entityId: employeeId,
-      meta: { email, phone, username, role, status },
+      meta: { email, phone, username, role, status, passwordReset: Boolean(password) },
       ip: getIp(req),
       userAgent: getUA(req)
     });
@@ -480,7 +495,7 @@ router.get("/users", async (_req, res, next) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      "SELECT id, username, email, phone, created_at FROM users ORDER BY id DESC LIMIT 200"
+      "SELECT id, username, email, phone, status, created_at FROM users ORDER BY id DESC LIMIT 200"
     );
     res.json({ users: rows });
   } catch (e) {
@@ -497,10 +512,11 @@ router.post("/users", async (req, res, next) => {
     if (!email) return res.status(400).json({ error: "请填写邮箱" });
 
     const pool = getPool();
-    const [r] = await pool.query("INSERT INTO users (username, email, phone) VALUES (?,?,?)", [
+    const [r] = await pool.query("INSERT INTO users (username, email, phone, status) VALUES (?,?,?,?)", [
       username,
       email,
-      phone
+      phone,
+      "active"
     ]);
     await writeAuditLog({
       actorEmployeeId: getActorEmployeeId(req),
@@ -512,7 +528,7 @@ router.post("/users", async (req, res, next) => {
       userAgent: getUA(req)
     });
     res.status(201).json({
-      user: { id: r.insertId, username, email, phone, created_at: new Date().toISOString() }
+      user: { id: r.insertId, username, email, phone, status: "active", created_at: new Date().toISOString() }
     });
   } catch (e) {
     next(e);
@@ -526,21 +542,29 @@ router.put("/users/:userId", async (req, res, next) => {
     const username = String(req.body.username || "").trim();
     const email = String(req.body.email || "").trim();
     const phone = String(req.body.phone || "").trim() || null;
+    const status = String(req.body.status || "active").trim();
     if (!username) return res.status(400).json({ error: "请填写用户名" });
     if (!email) return res.status(400).json({ error: "请填写邮箱" });
+    if (!["active", "disabled"].includes(status)) return res.status(400).json({ error: "status 仅支持 active/disabled" });
 
     const pool = getPool();
-    await pool.query("UPDATE users SET username=?, email=?, phone=? WHERE id=?", [username, email, phone, userId]);
+    await pool.query("UPDATE users SET username=?, email=?, phone=?, status=? WHERE id=?", [
+      username,
+      email,
+      phone,
+      status,
+      userId
+    ]);
     await writeAuditLog({
       actorEmployeeId: getActorEmployeeId(req),
       action: "update",
       entityType: "user",
       entityId: userId,
-      meta: { email, phone },
+      meta: { email, phone, status },
       ip: getIp(req),
       userAgent: getUA(req)
     });
-    res.json({ user: { id: userId, username, email, phone } });
+    res.json({ user: { id: userId, username, email, phone, status } });
   } catch (e) {
     next(e);
   }
