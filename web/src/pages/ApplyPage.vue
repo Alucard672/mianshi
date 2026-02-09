@@ -82,6 +82,7 @@
                 type="file"
                 accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 class="mt-2 block w-full text-xs font-mono text-white/70"
+                @change="onResumeChange"
               />
             </div>
             <div>
@@ -91,6 +92,7 @@
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 class="mt-2 block w-full text-xs font-mono text-white/70"
+                @change="onImageChange"
               />
             </div>
             <div>
@@ -100,6 +102,7 @@
                 type="file"
                 accept="video/mp4"
                 class="mt-2 block w-full text-xs font-mono text-white/70"
+                @change="onVideoChange"
               />
             </div>
           </div>
@@ -150,6 +153,9 @@ const success = ref(null);
 const resumeRef = ref(null);
 const imageRef = ref(null);
 const videoRef = ref(null);
+const resumeFile = ref(null);
+const imageFile = ref(null);
+const videoFile = ref(null);
 
 const form = ref({
   jobId: String(route.query.jobId || ""),
@@ -169,9 +175,20 @@ const canSubmit = computed(() => {
   if (!String(form.value.name || "").trim()) return false;
   if (!String(form.value.phone || "").trim()) return false;
   if (!String(form.value.email || "").trim()) return false;
-  const f = resumeRef.value?.files?.[0];
-  return Boolean(f);
+  return Boolean(resumeFile.value);
 });
+
+function onResumeChange(e) {
+  resumeFile.value = e?.target?.files?.[0] || null;
+}
+
+function onImageChange(e) {
+  imageFile.value = e?.target?.files?.[0] || null;
+}
+
+function onVideoChange(e) {
+  videoFile.value = e?.target?.files?.[0] || null;
+}
 
 function salaryText(j) {
   const min = j.salary_min;
@@ -197,10 +214,7 @@ async function load() {
 async function submit() {
   error.value = "";
   success.value = null;
-  const resumeFile = resumeRef.value?.files?.[0];
-  const imageFile = imageRef.value?.files?.[0];
-  const videoFile = videoRef.value?.files?.[0];
-  if (!resumeFile) {
+  if (!resumeFile.value) {
     error.value = "请上传简历。";
     return;
   }
@@ -212,14 +226,20 @@ async function submit() {
     fd.append("phone", String(form.value.phone || ""));
     fd.append("email", String(form.value.email || ""));
     fd.append("user_keywords", String(form.value.keywords || ""));
-    fd.append("resume", resumeFile);
-    if (imageFile) fd.append("image", imageFile);
-    if (videoFile) fd.append("video", videoFile);
+    fd.append("resume", resumeFile.value);
+    if (imageFile.value) fd.append("image", imageFile.value);
+    if (videoFile.value) fd.append("video", videoFile.value);
 
     const { data } = await http.post(`/api/public/posts/${encodeURIComponent(slug)}/apply`, fd, {
       headers: { "content-type": "multipart/form-data" }
     });
     success.value = data;
+    resumeFile.value = null;
+    imageFile.value = null;
+    videoFile.value = null;
+    if (resumeRef.value) resumeRef.value.value = "";
+    if (imageRef.value) imageRef.value.value = "";
+    if (videoRef.value) videoRef.value.value = "";
   } catch (e) {
     error.value = e?.response?.data?.error || e?.message || "提交失败";
   } finally {
