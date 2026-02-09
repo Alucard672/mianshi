@@ -121,11 +121,11 @@ echo "[deploy] migrating DB..."
 
 echo "[deploy] restarting pm2..."
 if command -v pm2 >/dev/null 2>&1; then
-  if pm2 describe "${APP_NAME}" >/dev/null 2>&1; then
-    pm2 restart "${APP_NAME}" --update-env
-  else
-    pm2 start "${CURRENT_DIR}/server/scripts/start.js" --name "${APP_NAME}" --cwd "${CURRENT_DIR}/server"
-  fi
+  # Ensure the process always points at the current release.
+  # If the app existed from a previous manual start, it might still be bound to an old path/cwd,
+  # so restart alone is insufficient.
+  pm2 delete "${APP_NAME}" >/dev/null 2>&1 || true
+  pm2 start "${CURRENT_DIR}/server/scripts/start.js" --name "${APP_NAME}" --cwd "${CURRENT_DIR}/server"
   pm2 save
 else
   echo "[deploy] pm2 not found; installing..."
@@ -143,10 +143,16 @@ if command -v nginx >/dev/null 2>&1; then
 fi
 
 echo "[deploy] health check..."
-curl -fsS "http://127.0.0.1:${PORT:-3001}/api/health" >/dev/null && echo "[deploy] OK: /api/health"
+# Give the server a moment to boot (npm install + pm2 start can race curl).
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  if curl -fsS "http://127.0.0.1:${PORT:-3001}/api/health" >/dev/null; then
+    echo "[deploy] OK: /api/health"
+    break
+  fi
+  sleep 1
+done
 
 echo "[deploy] pruning old releases (keep ${KEEP_RELEASES})..."
 ls -1dt "${RELEASES_DIR}"/* 2>/dev/null | tail -n "+$((KEEP_RELEASES + 1))" | xargs -r rm -rf
 
 echo "[deploy] done."
-

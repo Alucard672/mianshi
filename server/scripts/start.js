@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 const dotenv = require("dotenv");
 
-dotenv.config();
+// Prefer values from server/.env even if the host environment defines DB_* vars.
+dotenv.config({ override: true });
 
 async function boot() {
   const flag = String(process.env.DB_MIGRATE_ON_START || "").toLowerCase();
@@ -21,4 +22,3 @@ boot().catch((e) => {
   console.error("[boot] FAILED:", e?.message || e);
   process.exit(1);
 });
-

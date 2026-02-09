@@ -4,7 +4,8 @@ const path = require("path");
 const dotenv = require("dotenv");
 const mysql = require("mysql2/promise");
 
-dotenv.config();
+// Prefer values from server/.env even if the host environment defines DB_* vars.
+dotenv.config({ override: true });
 
 function required(name) {
   const v = process.env[name];
