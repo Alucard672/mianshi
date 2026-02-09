@@ -23,6 +23,7 @@
           <nav class="mt-3 space-y-1">
             <RouterLink class="nav" to="/admin/home">首页</RouterLink>
             <RouterLink class="nav" to="/admin/users">用户管理</RouterLink>
+            <RouterLink class="nav" to="/admin/applicants">面试人员</RouterLink>
             <RouterLink class="nav" to="/admin/questions">题库管理</RouterLink>
             <RouterLink class="nav" to="/admin/jobs">岗位管理</RouterLink>
             <RouterLink class="nav" to="/admin/posts">职位发布</RouterLink>

@@ -75,8 +75,8 @@ const loading = ref(false);
 const error = ref("");
 
 const form = reactive({
-  identifier: "admin",
-  password: "111111"
+  identifier: "",
+  password: ""
 });
 
 async function login() {

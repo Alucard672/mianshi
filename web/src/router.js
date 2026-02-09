@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import LoginPage from "./pages/LoginPage.vue";
 import SharePage from "./pages/SharePage.vue";
 import PublicPostPage from "./pages/PublicPostPage.vue";
+import ApplyPage from "./pages/ApplyPage.vue";
 import AdminLayout from "./pages/admin/AdminLayout.vue";
 import AdminHome from "./pages/admin/AdminHome.vue";
 import AdminUsers from "./pages/admin/AdminUsers.vue";
@@ -9,6 +10,7 @@ import AdminQuestions from "./pages/admin/AdminQuestions.vue";
 import AdminJobs from "./pages/admin/AdminJobs.vue";
 import AdminPosts from "./pages/admin/AdminPosts.vue";
 import AdminAudit from "./pages/admin/AdminAudit.vue";
+import AdminApplicants from "./pages/admin/AdminApplicants.vue";
 
 function hasEmployeeToken() {
   return Boolean(String(localStorage.getItem("employee_token") || "").trim());
@@ -21,6 +23,7 @@ const router = createRouter({
     { path: "/login", component: LoginPage },
     { path: "/share/:token", component: SharePage },
     { path: "/post/:slug", component: PublicPostPage },
+    { path: "/post/:slug/apply", component: ApplyPage },
     {
       path: "/admin",
       component: AdminLayout,
@@ -29,6 +32,7 @@ const router = createRouter({
       children: [
         { path: "home", component: AdminHome },
         { path: "users", component: AdminUsers },
+        { path: "applicants", component: AdminApplicants },
         { path: "questions", component: AdminQuestions },
         { path: "jobs", component: AdminJobs },
         { path: "posts", component: AdminPosts },

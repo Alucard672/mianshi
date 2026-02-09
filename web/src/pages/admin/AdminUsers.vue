@@ -20,6 +20,7 @@
         <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input v-model="candForm.username" class="input" placeholder="姓名/昵称" />
           <input v-model="candForm.email" class="input" placeholder="邮箱" />
+          <input v-model="candForm.phone" class="input" placeholder="手机号（可选）" />
         </div>
         <div class="mt-3 flex justify-end">
           <button class="btn btn-primary" @click="createCandidate">创建</button>
@@ -29,7 +30,7 @@
       <div class="space-y-2 max-h-[520px] overflow-auto">
         <div v-for="u in candidates" :key="u.id" class="rounded-xl border border-white/10 bg-white/5 p-4">
           <div class="text-xs font-mono text-white/85">#{{ u.id }} {{ u.username }}</div>
-          <div class="mt-2 text-[11px] font-mono text-white/55">{{ u.email }} | {{ u.created_at }}</div>
+          <div class="mt-2 text-[11px] font-mono text-white/55">{{ u.phone || "-" }} | {{ u.email }} | {{ u.created_at }}</div>
         </div>
       </div>
     </div>
@@ -89,7 +90,7 @@ const candidates = ref([]);
 const employees = ref([]);
 const lastIssuedToken = ref("");
 
-const candForm = reactive({ username: "", email: "" });
+const candForm = reactive({ username: "", email: "", phone: "" });
 const empForm = reactive({ name: "", phone: "", email: "", username: "", password: "", role: "staff" });
 
 const profile = computed(() => {
@@ -125,10 +126,12 @@ async function createCandidate() {
   try {
     const { data } = await http.post("/api/admin/users", {
       username: candForm.username,
-      email: candForm.email
+      email: candForm.email,
+      phone: candForm.phone
     });
     candForm.username = "";
     candForm.email = "";
+    candForm.phone = "";
     candidates.value = [data.user, ...candidates.value];
   } catch (e) {
     error.value = e?.response?.data?.error || e?.message || "创建失败";
@@ -202,4 +205,3 @@ onMounted(loadAll);
   color: rgba(100,210,255,0.95);
 }
 </style>
-

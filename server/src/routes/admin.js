@@ -484,7 +484,7 @@ router.get("/users", async (_req, res, next) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT 200"
+      "SELECT id, username, email, phone, created_at FROM users ORDER BY id DESC LIMIT 200"
     );
     res.json({ users: rows });
   } catch (e) {
@@ -496,21 +496,28 @@ router.post("/users", async (req, res, next) => {
   try {
     const username = String(req.body.username || "").trim();
     const email = String(req.body.email || "").trim();
+    const phone = String(req.body.phone || "").trim() || null;
     if (!username) return res.status(400).json({ error: "请填写用户名" });
     if (!email) return res.status(400).json({ error: "请填写邮箱" });
 
     const pool = getPool();
-    const [r] = await pool.query("INSERT INTO users (username, email) VALUES (?,?)", [username, email]);
+    const [r] = await pool.query("INSERT INTO users (username, email, phone) VALUES (?,?,?)", [
+      username,
+      email,
+      phone
+    ]);
     await writeAuditLog({
       actorEmployeeId: getActorEmployeeId(req),
       action: "create",
       entityType: "user",
       entityId: r.insertId,
-      meta: { email },
+      meta: { email, phone },
       ip: getIp(req),
       userAgent: getUA(req)
     });
-    res.status(201).json({ user: { id: r.insertId, username, email, created_at: new Date().toISOString() } });
+    res.status(201).json({
+      user: { id: r.insertId, username, email, phone, created_at: new Date().toISOString() }
+    });
   } catch (e) {
     next(e);
   }
@@ -522,21 +529,22 @@ router.put("/users/:userId", async (req, res, next) => {
     if (!Number.isFinite(userId)) return res.status(400).json({ error: "userId 参数不合法" });
     const username = String(req.body.username || "").trim();
     const email = String(req.body.email || "").trim();
+    const phone = String(req.body.phone || "").trim() || null;
     if (!username) return res.status(400).json({ error: "请填写用户名" });
     if (!email) return res.status(400).json({ error: "请填写邮箱" });
 
     const pool = getPool();
-    await pool.query("UPDATE users SET username=?, email=? WHERE id=?", [username, email, userId]);
+    await pool.query("UPDATE users SET username=?, email=?, phone=? WHERE id=?", [username, email, phone, userId]);
     await writeAuditLog({
       actorEmployeeId: getActorEmployeeId(req),
       action: "update",
       entityType: "user",
       entityId: userId,
-      meta: { email },
+      meta: { email, phone },
       ip: getIp(req),
       userAgent: getUA(req)
     });
-    res.json({ user: { id: userId, username, email } });
+    res.json({ user: { id: userId, username, email, phone } });
   } catch (e) {
     next(e);
   }
@@ -558,6 +566,78 @@ router.delete("/users/:userId", async (req, res, next) => {
       userAgent: getUA(req)
     });
     res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Interviewees list (applications/interviews)
+router.get("/interviews", async (_req, res, next) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT i.id, i.created_at, i.stage, i.match_rate, i.total_score, i.resume_path,
+              u.id AS user_id, u.username AS user_name, u.email AS user_email, u.phone AS user_phone,
+              j.id AS job_id, j.title AS job_title
+         FROM interviews i
+         JOIN users u ON u.id = i.user_id
+         JOIN jobs j ON j.id = i.job_id
+        ORDER BY i.id DESC
+        LIMIT 300`
+    );
+    res.json({ interviews: rows });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/interviews/:interviewId", async (req, res, next) => {
+  try {
+    const interviewId = Number(req.params.interviewId);
+    if (!Number.isFinite(interviewId)) return res.status(400).json({ error: "interviewId 参数不合法" });
+    const pool = getPool();
+    const [[row]] = await pool.query(
+      `SELECT i.id, i.created_at, i.stage, i.match_rate, i.total_score, i.resume_path, i.resume_file_id,
+              i.user_keywords, i.resume_text, i.second_round_invited,
+              u.id AS user_id, u.username AS user_name, u.email AS user_email, u.phone AS user_phone,
+              j.id AS job_id, j.title AS job_title, j.target_keywords
+         FROM interviews i
+         JOIN users u ON u.id = i.user_id
+         JOIN jobs j ON j.id = i.job_id
+        WHERE i.id=?
+        LIMIT 1`,
+      [interviewId]
+    );
+    if (!row) return res.status(404).json({ error: "未找到面试记录" });
+
+    const [qrows] = await pool.query(
+      `SELECT iq.ord, q.id, q.content, q.category,
+              r.user_answer, r.answer_video_path, r.answer_video_file_id, r.item_score
+         FROM interview_questions iq
+         JOIN questions q ON q.id = iq.question_id
+         LEFT JOIN results r ON r.interview_id = iq.interview_id AND r.question_id = iq.question_id
+        WHERE iq.interview_id=?
+        ORDER BY iq.ord ASC`,
+      [interviewId]
+    );
+
+    res.json({
+      interview: {
+        id: row.id,
+        created_at: row.created_at,
+        stage: row.stage,
+        match_rate: row.match_rate,
+        total_score: row.total_score,
+        resume_path: row.resume_path,
+        resume_file_id: row.resume_file_id,
+        user_keywords: row.user_keywords,
+        resume_text: row.resume_text,
+        second_round_invited: Boolean(row.second_round_invited),
+        user: { id: row.user_id, username: row.user_name, email: row.user_email, phone: row.user_phone },
+        job: { id: row.job_id, title: row.job_title, target_keywords: row.target_keywords },
+        questions: qrows || []
+      }
+    });
   } catch (e) {
     next(e);
   }

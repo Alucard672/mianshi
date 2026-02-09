@@ -20,13 +20,13 @@
         <div class="mt-5 flex flex-wrap gap-2 text-[11px] font-mono text-white/60">
           <span class="chip">更新：{{ post?.updated_at || "-" }}</span>
           <span class="chip">岗位数：{{ jobs.length }}</span>
-          <span class="chip">投递：通过 HR 分享链接上传简历</span>
+          <span class="chip">报名：选择岗位后在线填写资料并上传简历</span>
         </div>
       </div>
 
       <div v-if="error" class="mt-6 text-xs font-mono text-red-300">{{ error }}</div>
 
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
         <article
           v-for="j in jobs"
           :key="j.id"
@@ -82,6 +82,15 @@
             <div class="mt-2 text-[11px] font-mono text-white/70 break-words">
               {{ j.target_keywords || "-" }}
             </div>
+          </div>
+
+          <div class="mt-5 flex justify-end">
+            <router-link
+              class="rounded-2xl border border-cyan/30 bg-cyan/10 px-4 py-2 text-xs font-mono text-cyan hover:bg-cyan/15"
+              :to="`/post/${encodeURIComponent(post?.slug || route.params.slug)}/apply?jobId=${j.id}`"
+            >
+              报名该岗位
+            </router-link>
           </div>
         </article>
       </div>
@@ -143,4 +152,3 @@ onMounted(load);
 .tag-open { border-color: rgba(124,255,178,0.25); background: rgba(124,255,178,0.10); color: rgba(124,255,178,0.95); }
 .tag-closed { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.60); }
 </style>
-
