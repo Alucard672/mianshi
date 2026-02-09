@@ -11,6 +11,7 @@ import AdminJobs from "./pages/admin/AdminJobs.vue";
 import AdminPosts from "./pages/admin/AdminPosts.vue";
 import AdminAudit from "./pages/admin/AdminAudit.vue";
 import AdminApplicants from "./pages/admin/AdminApplicants.vue";
+import AdminNotifications from "./pages/admin/AdminNotifications.vue";
 
 function hasEmployeeToken() {
   return Boolean(String(localStorage.getItem("employee_token") || "").trim());
@@ -31,6 +32,7 @@ const router = createRouter({
       redirect: "/admin/home",
       children: [
         { path: "home", component: AdminHome },
+        { path: "notifications", component: AdminNotifications },
         { path: "users", component: AdminUsers },
         { path: "applicants", component: AdminApplicants },
         { path: "questions", component: AdminQuestions },
